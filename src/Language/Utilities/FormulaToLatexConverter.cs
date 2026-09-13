@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace eqprenex.Language.ToTextConverters
+namespace eqprenex.Language.Utilities
 {
     public class FormulaToLatexConverter
     {

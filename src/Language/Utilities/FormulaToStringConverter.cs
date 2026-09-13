@@ -1,7 +1,7 @@
 ﻿using System.Text;
 
 
-namespace eqprenex.Language.ToTextConverters
+namespace eqprenex.Language.Utilities
 {
     /// <summary>
     /// Efficiently converts a formula to a string.

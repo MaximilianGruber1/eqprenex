@@ -6,7 +6,7 @@ using System.Reflection.Emit;
 using System.Runtime.Intrinsics.Wasm;
 using System.CommandLine;
 using eqprenex.FormulaGeneration;
-using eqprenex.Language.ToTextConverters;
+using eqprenex.Language.Utilities;
 
 
 public partial class Program
@@ -263,8 +263,44 @@ public partial class Program
             }
             catch (Exception ex)
             {
-                throw ex;
-                //Console.Error.WriteLine($"Error: {ex.Message}");
+                Console.Error.WriteLine($"Error: {ex.Message}");
+                return 1;
+            }
+        });
+
+        var lenCommand = new Command(
+            "len",
+            "count the number of variable occurences of a formula");
+        rootCommand.Add(lenCommand);
+
+        var lenInput = new Argument<FileInfo?>("input")
+        {
+            Description = "input file (default: stdin)",
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
+        var lenOutput = new Option<FileInfo?>("-o")
+        {
+            Description = "output file (default: stdout)"
+        };
+
+        lenCommand.Add(lenInput);
+        lenCommand.Add(lenOutput);
+
+        lenCommand.SetAction(parseResult =>
+        {
+            try
+            {
+                var input = parseResult.GetValue(lenInput);
+                var output = parseResult.GetValue(lenOutput);
+
+                RunLen(input, output);
+
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error: {ex.Message}");
                 return 1;
             }
         });
@@ -272,7 +308,6 @@ public partial class Program
 
         return rootCommand.Parse(args).Invoke();
     }
-
 
     private static void RunPol(FileInfo? input, FileInfo? output)
     {
@@ -354,6 +389,24 @@ public partial class Program
 
         IFormula formula = new Parser(fileText).Parse();
         string result = new FormulaToLatexConverter().Convert(formula, combineQuantifiers, formatQuantifiers);
+
+        using TextWriter writer = output is null
+            ? Console.Out
+            : new StreamWriter(output.FullName);
+
+        writer.WriteLine(result);
+    }
+
+    private static void RunLen(FileInfo? input, FileInfo? output)
+    {
+        using TextReader reader = input is null
+            ? Console.In
+            : input.OpenText();
+
+        string fileText = reader.ReadToEnd();
+
+        IFormula formula = new Parser(fileText).Parse();
+        int result = new VariableOccurenceCounter().Count(formula);
 
         using TextWriter writer = output is null
             ? Console.Out

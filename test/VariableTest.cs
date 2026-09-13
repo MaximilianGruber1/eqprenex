@@ -1,6 +1,8 @@
 
 using Xunit;
 using eqprenex.Language;
+using eqprenex.Language.Utilities;
+using eqprenex.Parsing;
 
 namespace eqprenex.Tests
 {
@@ -103,6 +105,48 @@ namespace eqprenex.Tests
             Assert.Equal("012345", v.Name);
             Assert.Equal("0", v.Stem);
             Assert.Equal("12345", v.Index);
+        }
+    }
+
+    public class VariableCounterTest
+    {
+        private void Test(int count, string formula)
+        {
+            IFormula f = new Parser(formula).Parse();
+            var ctr = new VariableOccurenceCounter();
+            var actual = ctr.Count(f);
+
+            Assert.Equal(count, actual);
+        }
+
+
+        [Fact]
+        public void Simple()
+        {
+            Test(1, "a");
+            Test(1, "!a");
+            Test(2, "a & b");
+            Test(2, "a | b");
+            Test(2, "a -> b");
+            Test(2, "a <- b");
+            Test(2, "a <-> b");
+            Test(2, "?a a");
+            Test(2, "?a a");
+        }
+
+        [Fact]
+        public void Complex()
+        {
+            Test(
+                24,
+                "?a ?b #c #d (!(a -> !c) & !(b <-> !d) <-> e <-> g <-> !(!f & h)) <-> " +
+                "?a ?b #c #d (c <-> !(!a <-> !(!b <-> !d)) <-> !(h -> !(!g & !(e <-> f))))");
+            Test(
+                72,
+                "?a ?b ?c #d #e #f (!(e <-> !(!(d & !(a -> !b)) & (!c | f))) <-> g -> (!j <-> !(!h & !l & !(!i <-> k)))) <-> " +
+                "#a #b #c ?d ?e ?f (!c & !(!b & !d) & !(f | !(a | !e)) <-> !(!(g <-> k) & !(!h <- !(i | (!j -> !l))))) <-> " +
+                "?a ?b ?c #d #e #f ((c <-> d & (a -> e)) & b & f <-> l & (!i | g & !(k | !(h & !j)))) <-> " +
+                "?a ?b ?c #d #e #f (!(!a <-> d <- f) & !(b & c & e) <-> !(g -> !j <-> k <-> !(l <-> h & !i)))");
         }
     }
 }
